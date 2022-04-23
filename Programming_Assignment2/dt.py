@@ -154,17 +154,28 @@ class DecisionTree:
 
     # child 생성
     if self.attribute_selection_measure == "information_gain" or self.attribute_selection_measure == "gain_ratio":
-      for attribute_value in self.attribute_values[selected_attribute]:
-        new_dataset = dataset[dataset[selected_attribute] == attribute_value] # 선택된 attribute value들로 dataset 필터링
-        del new_dataset[selected_attribute]
+      ''' ver1-1 (infomation gain, gain ratio) '''
+      # for attribute_value in self.attribute_values[selected_attribute]:
+      #   new_dataset = dataset[dataset[selected_attribute] == attribute_value] # 선택된 attribute value들로 dataset 필터링
+      #   del new_dataset[selected_attribute]
+      #   # print(new_dataset)
+      #   if len(new_dataset) == 0: return Node(None, self.get_majority(dataset)) # new_dataset에 남아있는 sample이 없는 경우
+      #   else: node.child_node[attribute_value] = self.create_node(new_dataset)
+      ''' ver1-2 (infomation gain, gain ratio + gini_index) '''
+      child_values = self.gini_index(selected_attribute, dataset)
+      # print(child_values)
+      for child_value in child_values[0]:
+        new_dataset = dataset[dataset[selected_attribute].isin(list(child_value))] # 선택된 attribute value들로 dataset 필터링
+        # del new_dataset[selected_attribute] # 실행 안하는 것이 더 성능 좋음 => 아래 단계에 갔을 때도, 같은 attribute로 나눌 수 있어야 좀 더 분류 잘 함
         # print(new_dataset)
         if len(new_dataset) == 0: return Node(None, self.get_majority(dataset)) # new_dataset에 남아있는 sample이 없는 경우
-        else: node.child_node[attribute_value] = self.create_node(new_dataset)
+        else: node.child_node[child_value] = self.create_node(new_dataset)
     elif self.attribute_selection_measure == "gini_index":
+      ''' ver2 (gini index) '''
       # print(selected_attribute[1])
       for child_value in selected_attribute[1][0]:
         new_dataset = dataset[dataset[selected_attribute[0]].isin(list(child_value))] # 선택된 attribute value들로 dataset 필터링
-        del new_dataset[selected_attribute[0]]
+        # del new_dataset[selected_attribute[0]] # 실행 안하는 것이 더 성능 좋음 => 아래 단계에 갔을 때도, 같은 attribute로 나눌 수 있어야 좀 더 분류 잘 함
         # print(new_dataset)
         if len(new_dataset) == 0: return Node(None, self.get_majority(dataset)) # new_dataset에 남아있는 sample이 없는 경우
         else: node.child_node[child_value] = self.create_node(new_dataset)
@@ -195,6 +206,6 @@ test_dataset = pd.read_csv(test_filename, sep="\t")
 
 # Decision Tree 실행
 # 종류: information_gain, gain_ratio, gini_index
-dt = DecisionTree(train_dataset, "gain_ratio")
+dt = DecisionTree(train_dataset, "information_gain")
 result = dt.model_usage(test_dataset)
 result.to_csv(output_filename, index=False, sep="\t")
